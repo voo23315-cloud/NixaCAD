@@ -22,6 +22,11 @@
     "prisma": "^4.16.0",
     "ts-node": "*",
     "ts-node-dev": "*",
-    "typescript": "*"
+    "typescript": "*",
+    "@types/express": "*",
+    "@types/cors": "*",
+    "@types/bcrypt": "*",
+    "@types/jsonwebtoken": "*",
+    "@types/node": "*"
   }
 }

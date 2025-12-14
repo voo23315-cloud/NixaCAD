@@ -35,3 +35,26 @@ node scripts/e2e.js
 ```
 
 Weitere Details in den jeweiligen Ordnern: `backend/`, `database/`, `frontend/`.
+
+## Testing & CI
+
+- Local production build and test:
+
+```bash
+# Build frontend & backend
+make build
+
+# Start the production backend in background
+make start
+
+# Run E2E smoke tests
+make e2e
+```
+
+- Development (docker):
+
+```bash
+make dev
+```
+
+- CI: A GitHub Actions workflow runs on push/pull_request to `main` (see `.github/workflows/ci.yml`). It applies SQL migrations, builds frontend and backend, starts the backend and runs the E2E smoke tests.

@@ -57,7 +57,7 @@ const createCivilianSchema = z.object({
 
 app.post('/api/civilians', async (req, res) => {
   const parsed = createCivilianSchema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
   const data = parsed.data;
   const civilian = await prisma.civilian.create({ data: {
     user_id: data.userId,
@@ -192,7 +192,7 @@ app.get('/api/permissions', authMiddleware, requirePermission('manage_roles'), a
 
 app.post('/api/permissions', authMiddleware, requirePermission('manage_roles'), async (req: any, res) => {
   const { name, description } = req.body;
-  const p = await prisma.permission.create({ data: { name, description } });
+  const p = await prisma.permission.upsert({ where: { name }, update: { description }, create: { name, description } });
   await logAction(req.user?.id, 'create_permission', `permission:${p.name}`);
   res.status(201).json(p);
 });

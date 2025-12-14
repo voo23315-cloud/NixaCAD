@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: nixacad
+          POSTGRES_PASSWORD: nixacad
+          POSTGRES_DB: nixacad
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U nixacad" --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      DATABASE_URL: postgresql://nixacad:nixacad@localhost:5432/nixacad
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install backend deps
+        run: npm ci --prefix backend
+
+      - name: Generate Prisma client
+        run: npx prisma generate --schema=backend/prisma/schema.prisma
+
+      - name: Apply SQL migrations
+        run: |
+          for f in database/migrations/*.sql; do
+            echo "applying $f";
+            psql "$DATABASE_URL" -f "$f";
+          done
+
+      - name: Build frontend
+        run: |
+          npm ci --prefix frontend
+          npm --prefix frontend run build
+
+      - name: Build backend
+        run: |
+          npm --prefix backend run build
+
+      - name: Start backend
+        run: |
+          node backend/dist/index.js &
+          n=0; until [ $n -ge 30 ] || curl -sS http://localhost:4000/api/health >/dev/null; do n=$((n+1)); sleep 1; done
+
+      - name: Run E2E smoke tests
+        run: node scripts/e2e.js

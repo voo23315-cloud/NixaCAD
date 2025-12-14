@@ -5,7 +5,10 @@
     "rootDir": "src",
     "outDir": "dist",
     "strict": true,
+    "noImplicitAny": false,
     "esModuleInterop": true,
     "skipLibCheck": true
   }
+  ,
+  "exclude": ["prisma", "scripts", "node_modules"]
 }
