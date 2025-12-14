@@ -58,6 +58,9 @@ You can also run the provided setup script in production mode which builds and s
 node scripts/e2e.js
 ```
 
+Hinweis: Die Produktions‑Preview läuft nun auf http://localhost:5173 (früher verwendet Vite `preview` standardmäßig Port 4173).
+```
+
 - Development (docker):
 
 ```bash

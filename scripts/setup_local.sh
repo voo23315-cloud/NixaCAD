@@ -72,8 +72,8 @@ if [ "$MODE" = "prod" ]; then
     sleep 1
   done
 
-  echo "Starting frontend preview (vite preview)..."
-  npm --prefix frontend run preview &>/tmp/nixacad-frontend-prod.log &
+  echo "Starting frontend preview (vite preview) on port 5173..."
+  npm --prefix frontend run preview -- --port 5173 --host &>/tmp/nixacad-frontend-prod.log &
 
   echo "Production setup complete. Backend logs: /tmp/nixacad-backend-prod.log"
   echo "Frontend logs: /tmp/nixacad-frontend-prod.log"
