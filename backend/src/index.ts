@@ -4,7 +4,7 @@ import cors from 'cors';
 import prisma from './prisma';
 import { z } from 'zod';
 import authRouter, { authMiddleware, requireCivilian } from './auth';
-import { requireRole } from './rbac';
+import { requireRole, requirePermission } from './rbac';
 import { logAction } from './audit';
 
 dotenv.config();
@@ -188,7 +188,7 @@ app.get('/api/audit', authMiddleware, requireRole('Officer'), async (_req, res) 
 });
 
 // Tickets
-app.post('/api/tickets', authMiddleware, requireRole('Officer'), async (req: any, res) => {
+app.post('/api/tickets', authMiddleware, requirePermission('issue_ticket'), async (req: any, res) => {
   const { civilian_id, amount, reason } = req.body;
   const t = await prisma.ticket.create({ data: { civilian_id, amount: Number(amount), reason, issued_by: req.user?.id } });
   await logAction(req.user?.id, 'create_ticket', `ticket:${t.id}`, { civilian_id, amount });
@@ -201,7 +201,7 @@ app.get('/api/tickets/:civilianId', authMiddleware, async (req: any, res) => {
 });
 
 // Warrants
-app.post('/api/warrants', authMiddleware, requireRole('Officer'), async (req: any, res) => {
+app.post('/api/warrants', authMiddleware, requirePermission('issue_warrant'), async (req: any, res) => {
   const { civilian_id, reason, expires_at } = req.body;
   const w = await prisma.warrant.create({ data: { civilian_id, reason, expires_at: expires_at ? new Date(expires_at) : null, issued_by: req.user?.id } });
   await logAction(req.user?.id, 'create_warrant', `warrant:${w.id}`, { civilian_id });

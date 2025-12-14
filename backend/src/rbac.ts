@@ -13,3 +13,19 @@ export function requireRole(roleName: string) {
     next();
   };
 }
+
+export function requirePermission(permissionName: string) {
+  return async (req: any, res: any, next: any) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+    const civilian = await prisma.civilian.findFirst({ where: { user_id: userId } });
+    if (!civilian) return res.status(403).json({ error: 'Create a civilian character first' });
+    const assignments = await prisma.roleAssignment.findMany({ where: { civilian_id: civilian.id }, include: { role: true } });
+    const roleIds = assignments.map(a => a.role_id);
+    if (roleIds.length === 0) return res.status(403).json({ error: 'Insufficient role' });
+    const rp = await prisma.rolePermission.findFirst({ where: { role_id: { in: roleIds }, permission: { name: permissionName } }, include: { permission: true } });
+    if (!rp) return res.status(403).json({ error: 'Missing permission' });
+    req.civilian = civilian;
+    next();
+  };
+}

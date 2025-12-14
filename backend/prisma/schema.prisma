@@ -172,6 +172,23 @@ model Role {
   @@map("role_tbl")
 }
 
+model Permission {
+  id          String @id @default(uuid())
+  name        String @unique
+  description String?
+  rolePermissions RolePermission[]
+  @@map("permission")
+}
+
+model RolePermission {
+  id String @id @default(uuid())
+  role_id String
+  permission_id String
+  role Role @relation(fields: [role_id], references: [id])
+  permission Permission @relation(fields: [permission_id], references: [id])
+  @@map("role_permission")
+}
+
 model RoleAssignment {
   id          String @id @default(uuid())
   civilian_id String
