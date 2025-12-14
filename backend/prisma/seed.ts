@@ -6,7 +6,7 @@ async function main() {
   const user = await prisma.user.upsert({
     where: { email: 'admin@nixacad.local' },
     update: {},
-    create: { email: 'admin@nixacad.local', password: 'changeme' }
+    create: { email: 'admin@nixacad.local', password: await import('bcrypt').then(m=>m.hash('changeme',10)) }
   });
 
   const department = await prisma.department.upsert({

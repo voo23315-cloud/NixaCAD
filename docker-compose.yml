@@ -14,6 +14,28 @@ services:
       test: ["CMD-SHELL", "pg_isready -U nixacad"]
       interval: 10s
       retries: 5
+  backend:
+    build: ./backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      PORT: 4000
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - 4000:4000
+    volumes:
+      - ./backend:/app
+    command: sh -c "cd /app && npm install && npx prisma generate --schema=prisma/schema.prisma && npx ts-node prisma/seed.ts || true && npm run dev"
+
+  frontend:
+    build: ./frontend
+    ports:
+      - 5173:5173
+    volumes:
+      - ./frontend:/app
+    command: sh -c "cd /app && npm install && npm run dev"
 
 volumes:
   db-data:
