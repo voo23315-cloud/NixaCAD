@@ -193,4 +193,35 @@ model AuditLog {
   @@map("audit_log")
 }
 
+model Incident {
+  id        String @id @default(uuid())
+  title     String
+  description String?
+  reported_by String?
+  status    String @default("open")
+  created_at DateTime @default(now())
+  meta      Json?
+  @@map("incident")
+}
+
+model Ticket {
+  id        String @id @default(uuid())
+  civilian_id String
+  amount    Int
+  reason    String
+  issued_by String?
+  created_at DateTime @default(now())
+  @@map("ticket")
+}
+
+model Warrant {
+  id        String @id @default(uuid())
+  civilian_id String
+  issued_by String?
+  reason    String
+  expires_at DateTime?
+  created_at DateTime @default(now())
+  @@map("warrant")
+}
+
  

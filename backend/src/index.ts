@@ -138,6 +138,81 @@ app.get('/api/vehicles/:civilianId', authMiddleware, async (req: any, res) => {
   res.json(list);
 });
 
+// Incidents
+app.post('/api/incidents', authMiddleware, async (req: any, res) => {
+  const { title, description } = req.body;
+  const inc = await prisma.incident.create({ data: { title, description, reported_by: req.user?.id } });
+  await logAction(req.user?.id, 'create_incident', `incident:${inc.id}`, { title });
+  res.status(201).json(inc);
+});
+
+app.get('/api/incidents', authMiddleware, async (_req, res) => {
+  const list = await prisma.incident.findMany({ take: 200, orderBy: { created_at: 'desc' } });
+  res.json(list);
+});
+
+// Roles management (Officer required)
+app.get('/api/roles', authMiddleware, requireRole('Officer'), async (_req, res) => {
+  const list = await prisma.role.findMany();
+  res.json(list);
+});
+
+app.post('/api/roles', authMiddleware, requireRole('Officer'), async (req: any, res) => {
+  const { name, description } = req.body;
+  const r = await prisma.role.create({ data: { name, description } });
+  res.status(201).json(r);
+});
+
+app.post('/api/roles/assign', authMiddleware, requireRole('Officer'), async (req: any, res) => {
+  const { civilian_id, role_name } = req.body;
+  const role = await prisma.role.findUnique({ where: { name: role_name } });
+  if (!role) return res.status(404).json({ error: 'Role not found' });
+  const ass = await prisma.roleAssignment.create({ data: { civilian_id, role_id: role.id } });
+  await logAction(req.user?.id, 'assign_role', `role:${role.name}`, { civilian_id });
+  res.status(201).json(ass);
+});
+
+app.post('/api/roles/unassign', authMiddleware, requireRole('Officer'), async (req: any, res) => {
+  const { civilian_id, role_name } = req.body;
+  const role = await prisma.role.findUnique({ where: { name: role_name } });
+  if (!role) return res.status(404).json({ error: 'Role not found' });
+  await prisma.roleAssignment.deleteMany({ where: { civilian_id, role_id: role.id } });
+  await logAction(req.user?.id, 'unassign_role', `role:${role.name}`, { civilian_id });
+  res.json({ ok: true });
+});
+
+// Audit viewer
+app.get('/api/audit', authMiddleware, requireRole('Officer'), async (_req, res) => {
+  const list = await prisma.auditLog.findMany({ take: 200, orderBy: { when_ts: 'desc' } });
+  res.json(list);
+});
+
+// Tickets
+app.post('/api/tickets', authMiddleware, requireRole('Officer'), async (req: any, res) => {
+  const { civilian_id, amount, reason } = req.body;
+  const t = await prisma.ticket.create({ data: { civilian_id, amount: Number(amount), reason, issued_by: req.user?.id } });
+  await logAction(req.user?.id, 'create_ticket', `ticket:${t.id}`, { civilian_id, amount });
+  res.status(201).json(t);
+});
+
+app.get('/api/tickets/:civilianId', authMiddleware, async (req: any, res) => {
+  const list = await prisma.ticket.findMany({ where: { civilian_id: req.params.civilianId } });
+  res.json(list);
+});
+
+// Warrants
+app.post('/api/warrants', authMiddleware, requireRole('Officer'), async (req: any, res) => {
+  const { civilian_id, reason, expires_at } = req.body;
+  const w = await prisma.warrant.create({ data: { civilian_id, reason, expires_at: expires_at ? new Date(expires_at) : null, issued_by: req.user?.id } });
+  await logAction(req.user?.id, 'create_warrant', `warrant:${w.id}`, { civilian_id });
+  res.status(201).json(w);
+});
+
+app.get('/api/warrants/:civilianId', authMiddleware, async (req: any, res) => {
+  const list = await prisma.warrant.findMany({ where: { civilian_id: req.params.civilianId } });
+  res.json(list);
+});
+
 app.listen(port, async () => {
   console.log(`NixaCAD backend listening on ${port}`);
   try {

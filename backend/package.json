@@ -19,9 +19,9 @@
     "zod": "*"
   },
   "devDependencies": {
-    "prisma": "4.16.0",
-    "ts-node-dev": "*",
+    "prisma": "^4.16.0",
     "ts-node": "*",
+    "ts-node-dev": "*",
     "typescript": "*"
   }
 }

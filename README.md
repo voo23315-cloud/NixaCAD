@@ -21,6 +21,17 @@ npx ts-node prisma/seed.ts
 npm run dev
 ```
 
-4. Frontend: (noch Skeleton) in `frontend/` — siehe Projektstruktur.
+4. Frontend: (noch Skeleton) in `frontend/` — siehe Projektstruktur. Produktion-Builds benötigen Node ESM-Unterstützung; falls Docker-Frontend-Build fehlschlägt, baue lokal mit `npm run build` und prüfe `vite` Version / `@vitejs/plugin-react`.
+
+E2E Smoke Test
+
+```bash
+# Start services (db + dev servers)
+docker compose up -d
+cd backend && npm install && npx prisma generate --schema=prisma/schema.prisma && npx ts-node prisma/seed.ts && npm run dev &
+cd frontend && npm install && npm run dev &
+# In another terminal
+node scripts/e2e.js
+```
 
 Weitere Details in den jeweiligen Ordnern: `backend/`, `database/`, `frontend/`.

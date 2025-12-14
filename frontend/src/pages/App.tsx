@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Routes, Route, Link, useNavigate } from 'react-router-dom'
 import Dashboard from './Dashboard'
 import Civilians from './Civilians'
+import Incidents from './Incidents'
 import Login from './Login'
 import { getToken, clearToken } from '../utils/fetch'
 
@@ -21,6 +22,7 @@ export default function App(){
         <nav>
           <Link to="/">Dashboard</Link>
           <Link to="/civilians">Zivilisten</Link>
+          <Link to="/incidents">Einsätze</Link>
         </nav>
         <div className="bottom">
           <button onClick={()=>setDark(d=>!d)}>{dark ? 'Light' : 'Dark'}</button>
@@ -33,6 +35,7 @@ export default function App(){
           <Routes>
             <Route path="/" element={<Dashboard/>} />
             <Route path="/civilians" element={<Civilians/>} />
+            <Route path="/incidents" element={<> <Incidents/> </>} />
             <Route path="/login" element={<Login onLogin={()=>setAuthed(true)} />} />
           </Routes>
         </section>
