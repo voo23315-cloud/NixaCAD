@@ -1,0 +1,27 @@
+{
+  "name": "nixacad-backend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "build": "tsc -p .",
+    "start": "node dist/index.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev --name init --create-only"
+  },
+  "dependencies": {
+    "@prisma/client": "4.16.0",
+    "bcrypt": "^5.1.0",
+    "cors": "*",
+    "dotenv": "*",
+    "express": "*",
+    "jsonwebtoken": "^9.0.0",
+    "zod": "*"
+  },
+  "devDependencies": {
+    "prisma": "4.16.0",
+    "ts-node-dev": "*",
+    "ts-node": "*",
+    "typescript": "*"
+  }
+}

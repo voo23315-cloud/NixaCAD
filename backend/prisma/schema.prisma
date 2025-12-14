@@ -1,0 +1,196 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Gender {
+  MAENNLICH
+  WEIBLICH
+  DIVERS
+}
+
+enum CriminalStatus {
+  OFFEN
+  VERURTEILT
+  FREIGESPROCHEN
+}
+
+enum LicenseType {
+  FUEHRERSCHEIN
+  WAFFENSCHEIN
+  JAGDSCHEIN
+  SONSTIGES
+}
+
+enum LicenseStatus {
+  GUELTIG
+  ENTZOGEN
+  ABGELAUFEN
+}
+
+enum ApplicationStatus {
+  OFFEN
+  ANGENOMMEN
+  ABGELEHNT
+}
+
+enum DutyStatus {
+  IM_DIENST
+  AUSSER_DIENST
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now()) @map("created_at")
+  civilians Civilian[]
+  @@map("User")
+}
+
+model Civilian {
+  id           String         @id @default(uuid())
+  user_id      String
+  vorname      String
+  nachname     String
+  geburtsdatum DateTime?
+  geschlecht   Gender?
+  adresse      String?
+  telefonnummer String?
+  erstellt_am  DateTime       @default(now())
+
+  user         User           @relation(fields: [user_id], references: [id])
+  medical      MedicalRecord?
+  criminal     CriminalRecord[]
+  licenses     License[]
+  vehicles     Vehicle[]
+  applications Application[]
+  roleAssignments RoleAssignment[]
+
+  @@index([vorname, nachname])
+  @@map("civilian")
+}
+
+model MedicalRecord {
+  id           String   @id @default(uuid())
+  civilian_id  String   @unique
+  blutgruppe   String?
+  allergien    String?
+  vorkrankheiten String?
+  notizen      String?
+  metadata     Json?
+
+  civilian     Civilian @relation(fields: [civilian_id], references: [id])
+  treatments   Treatment[]
+  @@map("medical_record")
+}
+
+model Treatment {
+  id                 String   @id @default(uuid())
+  krankenakte_id     String
+  beschreibung       String
+  behandelnder_mitarbeiter String?
+  zeitstempel        DateTime @default(now())
+
+  krankenakte        MedicalRecord @relation(fields: [krankenakte_id], references: [id])
+  @@map("treatment")
+}
+
+model CriminalRecord {
+  id          String        @id @default(uuid())
+  civilian_id String
+  straftat    String
+  beschreibung String?
+  datum       DateTime
+  ort         String?
+  status      CriminalStatus @default(OFFEN)
+  beamter_id  String?
+  erstellt_am DateTime @default(now())
+
+  civilian    Civilian @relation(fields: [civilian_id], references: [id])
+  @@map("criminal_record")
+}
+
+model License {
+  id              String      @id @default(uuid())
+  civilian_id     String
+  typ             LicenseType
+  klasse          String?
+  status          LicenseStatus @default(GUELTIG)
+  ausstellende_behoerde String?
+  ablaufdatum     DateTime?
+  metadata        Json?
+
+  civilian        Civilian @relation(fields: [civilian_id], references: [id])
+  @@map("license")
+}
+
+model Vehicle {
+  id          String  @id @default(uuid())
+  civilian_id String
+  kennzeichen String  @unique
+  fahrzeugtyp String?
+  farbe       String?
+  versicherung String?
+  zugelassen  Boolean @default(true)
+  fahndungsstatus Boolean @default(false)
+
+  civilian    Civilian @relation(fields: [civilian_id], references: [id])
+  @@map("vehicle")
+}
+
+model Department {
+  id          String @id @default(uuid())
+  name        String @unique
+  beschreibung String?
+  aktiv       Boolean @default(true)
+  applications Application[]
+  @@map("department")
+}
+
+model Application {
+  id           String @id @default(uuid())
+  civilian_id  String
+  department_id String
+  status       ApplicationStatus @default(OFFEN)
+  erstellt_am  DateTime @default(now())
+
+  civilian     Civilian @relation(fields: [civilian_id], references: [id])
+  department   Department @relation(fields: [department_id], references: [id])
+  @@map("application")
+}
+
+model Role {
+  id          String @id @default(uuid())
+  name        String @unique
+  description String?
+  assignments RoleAssignment[]
+  @@map("role_tbl")
+}
+
+model RoleAssignment {
+  id          String @id @default(uuid())
+  civilian_id String
+  role_id     String
+  dienststatus DutyStatus @default(AUSSER_DIENST)
+
+  civilian    Civilian @relation(fields: [civilian_id], references: [id])
+  role        Role @relation(fields: [role_id], references: [id])
+  @@map("role_assignment")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  actor_id  String?
+  action    String
+  when_ts   DateTime @default(now())
+  where_info String?
+  meta      Json?
+  @@map("audit_log")
+}
+
+ 
