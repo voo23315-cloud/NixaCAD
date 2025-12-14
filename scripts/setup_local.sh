@@ -11,6 +11,13 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
+MODE="dev"
+for arg in "$@"; do
+  case "$arg" in
+    --prod) MODE="prod" ;;
+  esac
+done
+
 if [ ! -f .env ]; then
   echo "Creating .env from .env.example"
   cp .env.example .env
@@ -43,18 +50,44 @@ done
 echo "Postgres ready. Generating Prisma client and seeding DB..."
 
 npm --prefix backend install --no-audit --no-fund
-npx prisma generate --schema=backend/prisma/schema.prisma
+npm --prefix backend run prisma:generate -- --schema=./prisma/schema.prisma
 npx ts-node backend/prisma/seed.ts
+if [ "$MODE" = "prod" ]; then
+  echo "Building backend & frontend for production..."
+  npm --prefix backend run build
+  npm --prefix frontend install --no-audit --no-fund
+  npm --prefix frontend run build
 
-echo "Starting backend dev server..."
-# start backend dev server (ts-node-dev) in background
-npm --prefix backend run dev &>/tmp/nixacad-backend-dev.log &
+  echo "Starting production backend (node backend/dist/index.js)..."
+  node backend/dist/index.js &>/tmp/nixacad-backend-prod.log &
 
-echo "Starting frontend dev server..."
-npm --prefix frontend install --no-audit --no-fund
-npm --prefix frontend run dev &>/tmp/nixacad-frontend-dev.log &
+  # wait for backend health
+  n=0
+  until curl -sS http://localhost:4000/api/health >/dev/null 2>&1; do
+    n=$((n+1))
+    if [ $n -ge 30 ]; then
+      echo "Backend did not become ready in time" >&2
+      exit 1
+    fi
+    sleep 1
+  done
 
-echo "Setup complete. Backend logs: /tmp/nixacad-backend-dev.log" 
-echo "Frontend logs: /tmp/nixacad-frontend-dev.log"
+  echo "Starting frontend preview (vite preview)..."
+  npm --prefix frontend run preview &>/tmp/nixacad-frontend-prod.log &
 
-echo "You can now open http://localhost:5173 and run node scripts/e2e.js to verify."
+  echo "Production setup complete. Backend logs: /tmp/nixacad-backend-prod.log"
+  echo "Frontend logs: /tmp/nixacad-frontend-prod.log"
+  echo "Open http://localhost:5173 and run node scripts/e2e.js to verify."
+else
+  echo "Starting backend dev server..."
+  # start backend dev server (ts-node-dev) in background
+  npm --prefix backend run dev &>/tmp/nixacad-backend-dev.log &
+
+  echo "Starting frontend dev server..."
+  npm --prefix frontend install --no-audit --no-fund
+  npm --prefix frontend run dev &>/tmp/nixacad-frontend-dev.log &
+
+  echo "Setup complete. Backend logs: /tmp/nixacad-backend-dev.log"
+  echo "Frontend logs: /tmp/nixacad-frontend-dev.log"
+  echo "You can now open http://localhost:5173 and run node scripts/e2e.js to verify."
+fi

@@ -51,6 +51,13 @@ make start
 make e2e
 ```
 
+You can also run the provided setup script in production mode which builds and starts the services for you:
+
+```bash
+./scripts/setup_local.sh --prod
+node scripts/e2e.js
+```
+
 - Development (docker):
 
 ```bash

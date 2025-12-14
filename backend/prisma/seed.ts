@@ -39,50 +39,64 @@ async function main() {
       notizen: 'Test-Patient'
     }
   });
+  const existingLicense = await prisma.license.findFirst({ where: { civilian_id: civilian.id, typ: 'FUEHRERSCHEIN', klasse: 'B' } });
+  if (!existingLicense) {
+    await prisma.license.create({
+      data: {
+        civilian_id: civilian.id,
+        typ: 'FUEHRERSCHEIN',
+        klasse: 'B',
+        status: 'GUELTIG'
+      }
+    });
+  }
 
-  await prisma.license.create({
-    data: {
-      civilian_id: civilian.id,
-      typ: 'FUEHRERSCHEIN',
-      klasse: 'B',
-      status: 'GUELTIG'
-    }
-  });
+  const existingVehicle = await prisma.vehicle.findUnique({ where: { kennzeichen: 'NIXA-001' } });
+  if (!existingVehicle) {
+    await prisma.vehicle.create({
+      data: {
+        civilian_id: civilian.id,
+        kennzeichen: 'NIXA-001',
+        fahrzeugtyp: 'PKW',
+        farbe: 'Schwarz'
+      }
+    });
+  }
 
-  await prisma.vehicle.create({
-    data: {
-      civilian_id: civilian.id,
-      kennzeichen: 'NIXA-001',
-      fahrzeugtyp: 'PKW',
-      farbe: 'Schwarz'
-    }
-  });
+  const existingApp = await prisma.application.findFirst({ where: { civilian_id: civilian.id, department_id: department.id } });
+  if (!existingApp) {
+    await prisma.application.create({
+      data: {
+        civilian_id: civilian.id,
+        department_id: department.id,
+        status: 'OFFEN'
+      }
+    });
+  }
 
-  await prisma.application.create({
-    data: {
-      civilian_id: civilian.id,
-      department_id: department.id,
-      status: 'OFFEN'
-    }
-  });
+  const existingAss = await prisma.roleAssignment.findFirst({ where: { civilian_id: civilian.id, role_id: role.id } });
+  if (!existingAss) {
+    await prisma.roleAssignment.create({
+      data: {
+        civilian_id: civilian.id,
+        role_id: role.id,
+        dienststatus: 'AUSSER_DIENST'
+      }
+    });
+  }
 
-  await prisma.roleAssignment.create({
-    data: {
-      civilian_id: civilian.id,
-      role_id: role.id,
-      dienststatus: 'AUSSER_DIENST'
-    }
-  });
-
-  await prisma.criminalRecord.create({
-    data: {
-      civilian_id: civilian.id,
-      straftat: 'Tunichtgut',
-      beschreibung: 'Beispielhaft',
-      datum: new Date(),
-      status: 'OFFEN'
-    }
-  });
+  const existingCrim = await prisma.criminalRecord.findFirst({ where: { civilian_id: civilian.id, straftat: 'Tunichtgut' } });
+  if (!existingCrim) {
+    await prisma.criminalRecord.create({
+      data: {
+        civilian_id: civilian.id,
+        straftat: 'Tunichtgut',
+        beschreibung: 'Beispielhaft',
+        datum: new Date(),
+        status: 'OFFEN'
+      }
+    });
+  }
 
   console.log('Seeding finished');
 }
