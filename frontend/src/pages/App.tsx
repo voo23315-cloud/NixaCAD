@@ -4,6 +4,7 @@ import Dashboard from './Dashboard'
 import Civilians from './Civilians'
 import Incidents from './Incidents'
 import Login from './Login'
+import AdminRoles from './AdminRoles'
 import { getToken, clearToken } from '../utils/fetch'
 
 export default function App(){
@@ -23,6 +24,7 @@ export default function App(){
           <Link to="/">Dashboard</Link>
           <Link to="/civilians">Zivilisten</Link>
           <Link to="/incidents">Einsätze</Link>
+          {authed ? <Link to="/admin/roles">Admin</Link> : null}
         </nav>
         <div className="bottom">
           <button onClick={()=>setDark(d=>!d)}>{dark ? 'Light' : 'Dark'}</button>
@@ -37,6 +39,7 @@ export default function App(){
             <Route path="/civilians" element={<Civilians/>} />
             <Route path="/incidents" element={<> <Incidents/> </>} />
             <Route path="/login" element={<Login onLogin={()=>setAuthed(true)} />} />
+            <Route path="/admin/roles" element={<AdminRoles/>} />
           </Routes>
         </section>
       </main>

@@ -19,6 +19,9 @@ const port = process.env.PORT || 4000;
 // Simple health
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
+// Debug route: list prisma model keys
+// (removed debug route)
+
 // Civilians listing (example)
 app.get('/api/civilians', async (req, res) => {
   const q = String(req.query.q || '');
@@ -178,6 +181,46 @@ app.post('/api/roles/unassign', authMiddleware, requireRole('Officer'), async (r
   if (!role) return res.status(404).json({ error: 'Role not found' });
   await prisma.roleAssignment.deleteMany({ where: { civilian_id, role_id: role.id } });
   await logAction(req.user?.id, 'unassign_role', `role:${role.name}`, { civilian_id });
+  res.json({ ok: true });
+});
+
+// Permissions & role-permissions (manage_roles required)
+app.get('/api/permissions', authMiddleware, requirePermission('manage_roles'), async (_req, res) => {
+  const list = await prisma.permission.findMany();
+  res.json(list);
+});
+
+app.post('/api/permissions', authMiddleware, requirePermission('manage_roles'), async (req: any, res) => {
+  const { name, description } = req.body;
+  const p = await prisma.permission.create({ data: { name, description } });
+  await logAction(req.user?.id, 'create_permission', `permission:${p.name}`);
+  res.status(201).json(p);
+});
+
+app.get('/api/roles/:roleId/permissions', authMiddleware, requirePermission('manage_roles'), async (req: any, res) => {
+  const roleId = req.params.roleId;
+  const r = await prisma.role.findUnique({ where: { id: roleId }, include: { rolePermissions: { include: { permission: true } } } });
+  if (!r) return res.status(404).json({ error: 'Role not found' });
+  res.json(r.rolePermissions.map(rp => rp.permission));
+});
+
+app.post('/api/roles/assign_permission', authMiddleware, requirePermission('manage_roles'), async (req: any, res) => {
+  const { role_name, permission_name } = req.body;
+  const role = await prisma.role.findUnique({ where: { name: role_name } });
+  const permission = await prisma.permission.findUnique({ where: { name: permission_name } });
+  if (!role || !permission) return res.status(404).json({ error: 'Role or permission not found' });
+  const rp = await prisma.rolePermission.create({ data: { role_id: role.id, permission_id: permission.id } });
+  await logAction(req.user?.id, 'assign_permission', `role:${role.name}`, { permission: permission.name });
+  res.status(201).json(rp);
+});
+
+app.post('/api/roles/remove_permission', authMiddleware, requirePermission('manage_roles'), async (req: any, res) => {
+  const { role_name, permission_name } = req.body;
+  const role = await prisma.role.findUnique({ where: { name: role_name } });
+  const permission = await prisma.permission.findUnique({ where: { name: permission_name } });
+  if (!role || !permission) return res.status(404).json({ error: 'Role or permission not found' });
+  await prisma.rolePermission.deleteMany({ where: { role_id: role.id, permission_id: permission.id } });
+  await logAction(req.user?.id, 'remove_permission', `role:${role.name}`, { permission: permission.name });
   res.json({ ok: true });
 });
 

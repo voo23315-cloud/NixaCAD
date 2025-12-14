@@ -169,6 +169,7 @@ model Role {
   name        String @unique
   description String?
   assignments RoleAssignment[]
+  rolePermissions RolePermission[]
   @@map("role_tbl")
 }
 
